@@ -1,8 +1,6 @@
 #include "requests.h"
 
 #include <cmath>
-#include <iomanip>
-#include <iostream>
 #include <string>
 
 void add_alpha_field(std::vector<unsigned char> & message, const std::string & data, size_t length)
@@ -21,22 +19,8 @@ void add_integer_field(std::vector<unsigned char> & message, uint32_t data)
 
 void add_double_field(std::vector<unsigned char> & message, double data)
 {
-    std::cout << std::dec << "double_data:" << data << std::endl;
-    unsigned long long integer_data = (data * pow(10, 4));
-    std::cout << std::dec << "integer_data:" << integer_data << std::endl;
-    integer_data %= static_cast<unsigned long long>(pow(10, 10));
-    std::cout << std::dec << "integer_data:" << integer_data << std::endl;
-    add_integer_field(message, integer_data);
+    add_integer_field(message, data * pow(10, 4));
 }
-
-// void add_bitmask_field(std::vector<unsigned char> & message, char bitmask) {
-//     std::cout << "bitmask: " << bitmask << std::endl;
-//     // for (size_t i = 0; i < length; ++i) {
-//     //     message.push_back('0' + (bitmask & 1));
-//     //     bitmask >>= 1;
-//     // }
-//     message.push_back(bitmask);
-// }
 
 std::vector<unsigned char> create_enter_order_request(
         const std::string & cl_ord_id,
@@ -120,13 +104,6 @@ std::vector<unsigned char> create_enter_order_request(
     }
     add_alpha_field(message, capacity_value, 1);
 
-    std::cout << message.size() << std::endl;
-
-    for (const auto ch : message) {
-        std::cout << std::hex << static_cast<int>(ch) << ' ';
-    }
-    std::cout << std::endl;
-
     return message;
 }
 
@@ -181,13 +158,6 @@ std::vector<unsigned char> create_replace_order_request(
         break;
     }
     add_alpha_field(message, time_in_force_value, 1);
-
-    std::cout << message.size() << std::endl;
-
-    for (const auto ch : message) {
-        std::cout << std::hex << static_cast<int>(ch) << ' ';
-    }
-    std::cout << std::endl;
 
     return message;
 }
