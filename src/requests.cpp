@@ -10,16 +10,47 @@ void add_alpha_field(std::vector<unsigned char> & message, const std::string & d
     }
 }
 
-void add_integer_field(std::vector<unsigned char> & message, uint32_t data)
+void add_integer_field(std::vector<unsigned char> & message, const uint32_t data)
 {
-    for (int i = 24; i >= 0; i -= 8) {
-        message.push_back(static_cast<unsigned char>((data >> i) & 0xFF));
+    for (int bits = 24; bits >= 0; bits -= 8) {
+        message.push_back(static_cast<unsigned char>((data >> bits) & 0xFF));
     }
 }
 
-void add_double_field(std::vector<unsigned char> & message, double data)
+void add_double_field(std::vector<unsigned char> & message, const double data)
 {
     add_integer_field(message, data * pow(10, 4));
+}
+
+void add_time_in_force_field(std::vector<unsigned char> & message, const TimeInForce time_in_force)
+{
+    std::string time_in_force_value;
+    switch (time_in_force) {
+    case TimeInForce::Day:
+        time_in_force_value = "0";
+        break;
+    case TimeInForce::IOC:
+        time_in_force_value = "3";
+        break;
+    }
+    add_alpha_field(message, time_in_force_value, 1);
+}
+
+void add_capacity_field(std::vector<unsigned char> & message, const Capacity capacity)
+{
+    std::string capacity_value;
+    switch (capacity) {
+    case Capacity::Agency:
+        capacity_value = "1";
+        break;
+    case Capacity::Principal:
+        capacity_value = "2";
+        break;
+    case Capacity::RisklessPrincipal:
+        capacity_value = "7";
+        break;
+    }
+    add_alpha_field(message, capacity_value, 1);
 }
 
 std::vector<unsigned char> create_enter_order_request(
@@ -59,50 +90,19 @@ std::vector<unsigned char> create_enter_order_request(
         add_integer_field(message, 0x7FFFFFFF);
     }
 
-    // Firm
-    add_alpha_field(message, firm, 4);
+    add_alpha_field(message, firm, 4); // Firm
+    add_alpha_field(message, user, 6); // User
 
-    // User
-    add_alpha_field(message, user, 6);
-
-    // Order Bit field 1
-    message.push_back(1 | 8); // Bitmask: Time in Force | Capacity
-
-    // Order Bit field 2
-    message.push_back(0); // Bitmask
-
-    // Order Bit field 3
-    message.push_back(0); // Bitmask
-
-    // Order Bit field 4
-    message.push_back(0); // Bitmask
+    message.push_back(1 | 8); // Order Bit field 1: Time in Force | Capacity
+    message.push_back(0);     // Order Bit field 2
+    message.push_back(0);     // Order Bit field 3
+    message.push_back(0);     // Order Bit field 4
 
     // Time in Force
-    std::string time_in_force_value;
-    switch (time_in_force) {
-    case TimeInForce::Day:
-        time_in_force_value = "0";
-        break;
-    case TimeInForce::IOC:
-        time_in_force_value = "3";
-        break;
-    }
-    add_alpha_field(message, time_in_force_value, 1);
+    add_time_in_force_field(message, time_in_force);
 
     // Capacity
-    std::string capacity_value;
-    switch (capacity) {
-    case Capacity::Agency:
-        capacity_value = "1";
-        break;
-    case Capacity::Principal:
-        capacity_value = "2";
-        break;
-    case Capacity::RisklessPrincipal:
-        capacity_value = "7";
-        break;
-    }
-    add_alpha_field(message, capacity_value, 1);
+    add_capacity_field(message, capacity);
 
     return message;
 }
@@ -135,29 +135,13 @@ std::vector<unsigned char> create_replace_order_request(
     // User
     add_alpha_field(message, user, 6);
 
-    // Order Bit field 1
-    message.push_back(1); // Bitmask: Time in Force
-
-    // Order Bit field 2
-    message.push_back(0); // Bitmask
-
-    // Order Bit field 3
-    message.push_back(0); // Bitmask
-
-    // Order Bit field 4
-    message.push_back(0); // Bitmask
+    message.push_back(1); // Order Bit field 1: Time in Force
+    message.push_back(0); // Order Bit field 2
+    message.push_back(0); // Order Bit field 3
+    message.push_back(0); // Order Bit field 4
 
     // Time in Force
-    std::string time_in_force_value;
-    switch (time_in_force) {
-    case TimeInForce::Day:
-        time_in_force_value = "0";
-        break;
-    case TimeInForce::IOC:
-        time_in_force_value = "3";
-        break;
-    }
-    add_alpha_field(message, time_in_force_value, 1);
+    add_time_in_force_field(message, time_in_force);
 
     return message;
 }
