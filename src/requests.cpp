@@ -98,11 +98,8 @@ std::vector<unsigned char> create_enter_order_request(
     message.push_back(0);     // Order Bit field 3
     message.push_back(0);     // Order Bit field 4
 
-    // Time in Force
-    add_time_in_force_field(message, time_in_force);
-
-    // Capacity
-    add_capacity_field(message, capacity);
+    add_time_in_force_field(message, time_in_force); // Time in Force
+    add_capacity_field(message, capacity);           // Capacity
 
     return message;
 }
@@ -140,8 +137,7 @@ std::vector<unsigned char> create_replace_order_request(
     message.push_back(0); // Order Bit field 3
     message.push_back(0); // Order Bit field 4
 
-    // Time in Force
-    add_time_in_force_field(message, time_in_force);
+    add_time_in_force_field(message, time_in_force); // Time in Force
 
     return message;
 }
