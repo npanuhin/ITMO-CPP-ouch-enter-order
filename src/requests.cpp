@@ -84,7 +84,7 @@ std::vector<unsigned char> create_enter_order_request(
     add_integer_field(message, volume);
 
     // Order Book
-    add_integer_field(message, std::stoull(symbol)); // stoul can be used
+    add_integer_field(message, std::stoul(symbol));
 
     // Price
     if (ord_type == OrdType::Limit) {
