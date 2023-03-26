@@ -3,10 +3,10 @@
 #include <cmath>
 #include <string>
 
-void add_alpha_field(std::vector<unsigned char> & message, char data)
-{
-    message.push_back(data);
-}
+#define FIELD(type, ...) \
+    add_##type##_field(message, __VA_ARGS__)
+
+#define add_char(character) message.push_back(character);
 
 void add_alpha_field(std::vector<unsigned char> & message, const std::string & data, size_t max_length = 0)
 {
@@ -14,30 +14,36 @@ void add_alpha_field(std::vector<unsigned char> & message, const std::string & d
         max_length = data.size();
     }
     for (size_t i = 0; i < max_length; ++i) {
-        add_alpha_field(message, i < data.size() ? data[i] : ' ');
+        add_char(i < data.size() ? data[i] : ' ');
     }
+}
+
+// Добавочный метод для char, чтобы не конверировать его в string и не делать лишних операций в функции выше
+void add_alpha_field(std::vector<unsigned char> & message, char data)
+{
+    add_char(data);
 }
 
 void add_integer_field(std::vector<unsigned char> & message, const uint32_t data)
 {
     for (int byte = sizeof(data) - 1; byte >= 0; byte -= 1) {
-        add_alpha_field(message, (data >> (byte * 8)) & 0xFF);
+        add_char((data >> (byte * 8)) & 0xFF);
     }
 }
 
 void add_double_field(std::vector<unsigned char> & message, const double data)
 {
-    add_integer_field(message, data * pow(10, 4));
+    FIELD(integer, data * pow(10, 4));
 }
 
 void add_time_in_force_field(std::vector<unsigned char> & message, const TimeInForce time_in_force)
 {
     switch (time_in_force) {
     case TimeInForce::Day:
-        add_alpha_field(message, '0');
+        add_char('0');
         break;
     case TimeInForce::IOC:
-        add_alpha_field(message, '3');
+        add_char('3');
         break;
     }
 }
@@ -46,13 +52,13 @@ void add_capacity_field(std::vector<unsigned char> & message, const Capacity cap
 {
     switch (capacity) {
     case Capacity::Agency:
-        add_alpha_field(message, '1');
+        add_char('1');
         break;
     case Capacity::Principal:
-        add_alpha_field(message, '2');
+        add_char('2');
         break;
     case Capacity::RisklessPrincipal:
-        add_alpha_field(message, '7');
+        add_char('7');
         break;
     }
 }
@@ -72,38 +78,38 @@ std::vector<unsigned char> create_enter_order_request(
     std::vector<unsigned char> message;
 
     // Type
-    add_alpha_field(message, 'O');
+    FIELD(alpha, 'O');
 
     // Order Token
-    add_alpha_field(message, cl_ord_id, 14);
+    FIELD(alpha, cl_ord_id, 14);
 
     // Buy/Sell Indicator
-    add_alpha_field(message, side == Side::Buy ? 'B' : 'S');
+    FIELD(alpha, side == Side::Buy ? 'B' : 'S');
 
     // Quantity
-    add_integer_field(message, volume);
+    FIELD(integer, volume);
 
     // Order Book
-    add_integer_field(message, std::stoul(symbol));
+    FIELD(integer, std::stoul(symbol));
 
     // Price
     if (ord_type == OrdType::Limit) {
-        add_double_field(message, price);
+        FIELD(double, price);
     }
     else {
-        add_integer_field(message, 0x7FFFFFFF);
+        FIELD(integer, 0x7FFFFFFF);
     }
 
-    add_alpha_field(message, firm, 4); // Firm
-    add_alpha_field(message, user, 6); // User
+    FIELD(alpha, firm, 4); // Firm
+    FIELD(alpha, user, 6); // User
 
-    add_alpha_field(message, 1 | 8); // Order Bit field 1: Time in Force | Capacity
-    add_alpha_field(message, 0);     // Order Bit field 2
-    add_alpha_field(message, 0);     // Order Bit field 3
-    add_alpha_field(message, 0);     // Order Bit field 4
+    FIELD(alpha, 1 | 8); // Order Bit field 1: Time in Force | Capacity
+    FIELD(alpha, 0);     // Order Bit field 2
+    FIELD(alpha, 0);     // Order Bit field 3
+    FIELD(alpha, 0);     // Order Bit field 4
 
-    add_time_in_force_field(message, time_in_force); // Time in Force
-    add_capacity_field(message, capacity);           // Capacity
+    FIELD(time_in_force, time_in_force); // Time in Force
+    FIELD(capacity, capacity);           // Capacity
 
     return message;
 }
@@ -119,29 +125,29 @@ std::vector<unsigned char> create_replace_order_request(
     std::vector<unsigned char> message;
 
     // Type
-    add_alpha_field(message, 'U');
+    FIELD(alpha, 'U');
 
     // Existing Order Token
-    add_alpha_field(message, old_cl_ord_id, 14);
+    FIELD(alpha, old_cl_ord_id, 14);
 
     // Order Token
-    add_alpha_field(message, new_cl_ord_id, 14);
+    FIELD(alpha, new_cl_ord_id, 14);
 
     // Quantity
-    add_integer_field(message, total_volume);
+    FIELD(integer, total_volume);
 
     // Price
-    add_double_field(message, price);
+    FIELD(double, price);
 
     // User
-    add_alpha_field(message, user, 6);
+    FIELD(alpha, user, 6);
 
-    add_alpha_field(message, 1); // Order Bit field 1: Time in Force
-    add_alpha_field(message, 0); // Order Bit field 2
-    add_alpha_field(message, 0); // Order Bit field 3
-    add_alpha_field(message, 0); // Order Bit field 4
+    FIELD(alpha, 1); // Order Bit field 1: Time in Force
+    FIELD(alpha, 0); // Order Bit field 2
+    FIELD(alpha, 0); // Order Bit field 3
+    FIELD(alpha, 0); // Order Bit field 4
 
-    add_time_in_force_field(message, time_in_force); // Time in Force
+    FIELD(time_in_force, time_in_force); // Time in Force
 
     return message;
 }
